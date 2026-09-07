@@ -1,40 +1,15 @@
 // ============================================
 // BAH BAH'S JOURNEY
+// TWO-WAY DATABASE-DRIVEN VERSION
 // ============================================
 
-const stages = [
-  {
-    emoji: "🚶‍♂️",
-    title: "Walk to bus"
-  },
-  {
-    emoji: "🚌",
-    title: "Ride the bus"
-  },
-  {
-    emoji: "🚂",
-    title: "Ride the train"
-  },
-  {
-    emoji: "🚇",
-    title: "Ride the underground"
-  },
-  {
-    emoji: "🚶‍♂️",
-    title: "Final walk to work"
-  },
-  {
-    emoji: "🏢",
-    title: "Reached work"
-  }
-];
-
 let journeyId = null;
+let stages = [];
 let currentStage = 1;
 
 
 // ============================================
-// LOAD JOURNEY
+// LOAD ACTIVE JOURNEY
 // ============================================
 
 async function loadJourney() {
@@ -42,21 +17,29 @@ async function loadJourney() {
   try {
 
     const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/journeys?name=eq.Bah%20Bah&select=*`,
+
+      `${SUPABASE_URL}/rest/v1/journeys?active=eq.true&select=*&order=updated_at.desc&limit=1`,
+
       {
+
         headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+
+          apikey:
+            SUPABASE_ANON_KEY,
+
+          Authorization:
+            `Bearer ${SUPABASE_ANON_KEY`
+
         }
+
       }
+
     );
 
-    const responseText = await response.text();
 
-    console.log(
-      "Supabase status:",
-      response.status
-    );
+    const responseText =
+      await response.text();
+
 
     if (!response.ok) {
 
@@ -66,23 +49,82 @@ async function loadJourney() {
 
     }
 
+
     const journeys =
       JSON.parse(responseText);
+
 
     if (!journeys.length) {
 
       throw new Error(
-        "Bah Bah's journey was not found."
+        "No active journey found."
       );
 
     }
 
-    const journey = journeys[0];
 
-    journeyId = journey.id;
+    const journey =
+      journeys[0];
+
+
+    journeyId =
+      journey.id;
+
 
     currentStage =
       journey.current_stage;
+
+
+    // ----------------------------------------
+    // Load stages
+    // ----------------------------------------
+
+    const stagesResponse = await fetch(
+
+      `${SUPABASE_URL}/rest/v1/stages?journey_id=eq.${journeyId}&select=*&order=position.asc`,
+
+      {
+
+        headers: {
+
+          apikey:
+            SUPABASE_ANON_KEY,
+
+          Authorization:
+            `Bearer ${SUPABASE_ANON_KEY`
+
+        }
+
+      }
+
+    );
+
+
+    const stagesText =
+      await stagesResponse.text();
+
+
+    if (!stagesResponse.ok) {
+
+      throw new Error(
+        `Stages error ${stagesResponse.status}: ${stagesText}`
+      );
+
+    }
+
+
+    stages =
+      JSON.parse(stagesText);
+
+
+    if (!stages.length) {
+
+      throw new Error(
+        "No stages found."
+      );
+
+    }
+
 
     render(journey);
 
@@ -92,34 +134,45 @@ async function loadJourney() {
 
     console.error(error);
 
-    document.getElementById(
-      "journey"
-    ).innerHTML = `
-      <div class="loading">
-        ⚠️ ${error.message}
-      </div>
-    `;
+    const journeyElement =
+      document.getElementById(
+        "journey"
+      );
+
+
+    if (journeyElement) {
+
+      journeyElement.innerHTML = `
+
+        <div class="loading">
+          ⚠️ ${error.message}
+        </div>
+
+      `;
+
+    }
 
   }
+
 }
 
 
 // ============================================
-// RENDER JOURNEY
+// RENDER
 // ============================================
 
 function render(journey) {
 
   const journeyElement =
-    document.getElementById("journey");
+    document.getElementById(
+      "journey"
+    );
+
 
   if (!journeyElement) {
-    console.error("Journey element missing");
     return;
   }
 
-
-  // Clear timeline
 
   journeyElement.innerHTML = "";
 
@@ -134,8 +187,12 @@ function render(journey) {
       const position =
         index + 1;
 
+
       const element =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
+
 
       element.className =
         "stage";
@@ -196,10 +253,16 @@ function render(journey) {
     ];
 
 
+  if (!stage) {
+    return;
+  }
+
+
   const currentEmoji =
     document.getElementById(
       "currentEmoji"
     );
+
 
   const currentTitle =
     document.getElementById(
@@ -225,36 +288,36 @@ function render(journey) {
   // PROGRESS
   // ==========================================
 
-  let progress = 0;
+  let progress =
+    Number(
+      journey.progress
+    );
+
 
   if (
-    journey.current_stage >=
-    stages.length
+    Number.isNaN(progress)
   ) {
 
-    progress = 100;
+    progress = 0;
 
   }
 
-  else {
 
-    progress =
-      Math.round(
-        (
-          (journey.current_stage - 1)
-          /
-          (stages.length - 1)
-        )
-        * 100
-      );
-
-  }
+  progress =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        progress
+      )
+    );
 
 
   const progressBar =
     document.getElementById(
       "progressBar"
     );
+
 
   const progressText =
     document.getElementById(
@@ -282,32 +345,33 @@ function render(journey) {
   // UP NEXT
   // ==========================================
 
-  const upNextElement =
+  const upNext =
     document.getElementById(
       "upNext"
     );
 
 
-  if (upNextElement) {
+  if (upNext) {
 
     if (
       journey.current_stage <
       stages.length
     ) {
 
-      const nextStage =
+      const next =
         stages[
           journey.current_stage
         ];
 
-      upNextElement.textContent =
-        `${nextStage.emoji} ${nextStage.title}`;
+
+      upNext.textContent =
+        `${next.emoji} ${next.title}`;
 
     }
 
     else {
 
-      upNextElement.textContent =
+      upNext.textContent =
         "🎉 Journey complete!";
 
     }
@@ -316,7 +380,7 @@ function render(journey) {
 
 
   // ==========================================
-  // NEXT BUTTON
+  // BUTTON
   // ==========================================
 
   const button =
@@ -354,7 +418,7 @@ function render(journey) {
 
 
   // ==========================================
-  // LAST UPDATED
+  // UPDATED
   // ==========================================
 
   const updated =
@@ -373,14 +437,17 @@ function render(journey) {
         journey.updated_at
       );
 
+
     updated.textContent =
-      `Last updated ${date.toLocaleTimeString(
-        [],
-        {
-          hour: "2-digit",
-          minute: "2-digit"
-        }
-      )}`;
+      `Last updated ${
+        date.toLocaleTimeString(
+          [],
+          {
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        )
+      }`;
 
   }
 
@@ -426,13 +493,30 @@ if (nextButton) {
         currentStage + 1;
 
 
+      const progress =
+        Math.round(
+
+          (
+            (nextStage - 1)
+            /
+            (stages.length - 1)
+          )
+          * 100
+
+        );
+
+
       try {
 
         const response =
           await fetch(
+
             `${SUPABASE_URL}/rest/v1/journeys?id=eq.${journeyId}`,
+
             {
-              method: "PATCH",
+
+              method:
+                "PATCH",
 
               headers: {
 
@@ -456,6 +540,9 @@ if (nextButton) {
                   current_stage:
                     nextStage,
 
+                  progress:
+                    progress,
+
                   updated_at:
                     new Date()
                       .toISOString()
@@ -463,6 +550,7 @@ if (nextButton) {
                 })
 
             }
+
           );
 
 
@@ -479,8 +567,10 @@ if (nextButton) {
         }
 
 
-        const updatedJourney =
-          JSON.parse(responseText);
+        const updatedJourneys =
+          JSON.parse(
+            responseText
+          );
 
 
         currentStage =
@@ -488,14 +578,17 @@ if (nextButton) {
 
 
         render(
-          updatedJourney[0]
+          updatedJourneys[0]
         );
 
       }
 
       catch (error) {
 
-        console.error(error);
+        console.error(
+          error
+        );
+
 
         alert(
           error.message
@@ -508,6 +601,7 @@ if (nextButton) {
       }
 
     }
+
   );
 
 }
