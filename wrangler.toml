@@ -1,0 +1,8 @@
+name = "bah-bah-journey"
+
+compatibility_date = "2026-09-07"
+
+[assets]
+directory = "."
+binding = "ASSETS"
+
