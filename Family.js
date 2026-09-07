@@ -21,7 +21,7 @@ async function loadJourney() {
 
     const journeyResponse = await fetch(
 
-      `${SUPABASE_URL}/rest/v1/journeys?name=eq.Bah%20Bah&active=eq.true&select=*`,
+      `${SUPABASE_URL}/rest/v1/journeys?active=eq.true&select=*&order=updated_at.desc&limit=1`,
 
       {
         headers: {
