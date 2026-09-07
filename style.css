@@ -1,48 +1,634 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#111827">
-<title>Bah Bah's Journey</title>
-<link rel="stylesheet" href="style.css">
-</head>
+* {
+box-sizing: border-box;
+}
 
-<body>
+:root {
+--blue: #2563eb;
+--blue-light: #60a5fa;
+--green: #22c55e;
+--dark: #07111f;
+--card: rgba(255, 255, 255, 0.10);
+}
 
-<main class="app">
+body {
+margin: 0;
+min-height: 100vh;
 
-<header>
-<div class="heart">❤️</div>
-<h1>Bah Bah's Journey</h1>
-<p class="subtitle">Journey to work</p>
-</header>
+font-family:
+-apple-system,
+BlinkMacSystemFont,
+"Segoe UI",
+Roboto,
+Arial,
+sans-serif;
 
-<section id="journey" class="journey">
-<div class="loading">Loading journey...</div>
-</section>
+color: white;
 
-<section class="current">
-<div id="currentEmoji" class="current-emoji">🚶‍♂️</div>
-<h2 id="currentTitle">Loading...</h2>
+background:
+linear-gradient(
+180deg,
+#1d4ed8 0%,
+#60a5fa 45%,
+#dbeafe 100%
+);
 
-<div class="progress-container">
-<div id="progressBar" class="progress-bar"></div>
-</div>
+overflow-x: hidden;
+}
 
-<div id="progressText" class="progress-text">0%</div>
-</section>
+/* --------------------------------
+APP
+-------------------------------- */
 
-<button id="nextButton" class="next-button">
-NEXT →
-</button>
+.app {
+width: 100%;
+max-width: 600px;
+min-height: 100vh;
 
-<p id="updated" class="updated"></p>
+margin: auto;
+padding: 22px 18px 40px;
 
-</main>
+position: relative;
+}
 
-<script src="config.js"></script>
-<script src="app.js"></script>
+/* --------------------------------
+SKY
+-------------------------------- */
 
-</body>
-</html>
+body::before {
+content: "☁️ ☁️";
+
+position: fixed;
+top: 55px;
+left: 0;
+
+width: 100%;
+
+font-size: 42px;
+letter-spacing: 70px;
+
+opacity: 0.55;
+
+pointer-events: none;
+
+animation: clouds 25s linear infinite;
+}
+
+@keyframes clouds {
+
+from {
+transform: translateX(-10%);
+}
+
+to {
+transform: translateX(10%);
+}
+}
+
+/* --------------------------------
+HEADER
+-------------------------------- */
+
+header {
+text-align: center;
+margin-bottom: 20px;
+
+position: relative;
+z-index: 2;
+}
+
+.heart {
+font-size: 34px;
+
+animation:
+heartbeat 1.8s infinite;
+}
+
+@keyframes heartbeat {
+
+0%, 100% {
+transform: scale(1);
+}
+
+10% {
+transform: scale(1.12);
+}
+
+20% {
+transform: scale(1);
+}
+}
+
+h1 {
+margin: 4px 0 0;
+
+font-size: 28px;
+font-weight: 800;
+
+text-shadow:
+0 3px 12px rgba(0,0,0,.25);
+}
+
+.subtitle {
+margin: 5px 0 0;
+
+color: rgba(255,255,255,.85);
+}
+
+/* --------------------------------
+CURRENT JOURNEY CARD
+-------------------------------- */
+
+.current {
+position: relative;
+z-index: 2;
+
+padding: 28px 20px;
+
+text-align: center;
+
+border-radius: 28px;
+
+background: rgba(7,17,31,.42);
+
+backdrop-filter: blur(15px);
+
+box-shadow:
+0 20px 50px rgba(0,0,0,.25);
+
+border:
+1px solid rgba(255,255,255,.18);
+}
+
+/* --------------------------------
+TRANSPORT CHARACTER
+-------------------------------- */
+
+.current-emoji {
+font-size: 82px;
+
+display: inline-block;
+
+filter:
+drop-shadow(0 14px 8px rgba(0,0,0,.3));
+
+animation:
+vehicleFloat 2.2s ease-in-out infinite;
+}
+
+@keyframes vehicleFloat {
+
+0%, 100% {
+transform:
+translateY(0)
+rotate(-1deg);
+}
+
+50% {
+transform:
+translateY(-12px)
+rotate(1deg);
+}
+}
+
+.current h2 {
+margin: 8px 0 20px;
+
+font-size: 25px;
+font-weight: 800;
+}
+
+/* --------------------------------
+PROGRESS
+-------------------------------- */
+
+.progress-container {
+
+height: 22px;
+
+width: 100%;
+
+padding: 3px;
+
+background:
+rgba(0,0,0,.35);
+
+border-radius: 999px;
+
+overflow: hidden;
+}
+
+.progress-bar {
+
+height: 100%;
+
+width: 0%;
+
+border-radius: 999px;
+
+background:
+linear-gradient(
+90deg,
+#22c55e,
+#86efac,
+#38bdf8
+);
+
+box-shadow:
+0 0 14px rgba(34,197,94,.65);
+
+transition:
+width 0.8s cubic-bezier(.2,.8,.2,1);
+
+position: relative;
+}
+
+.progress-bar::after {
+
+content: "";
+
+position: absolute;
+
+top: 0;
+left: -100%;
+
+width: 100%;
+height: 100%;
+
+background:
+linear-gradient(
+90deg,
+transparent,
+rgba(255,255,255,.65),
+transparent
+);
+
+animation:
+progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+
+from {
+left: -100%;
+}
+
+to {
+left: 100%;
+}
+}
+
+.progress-text {
+
+margin-top: 10px;
+
+font-size: 14px;
+
+color: rgba(255,255,255,.75);
+}
+
+/* --------------------------------
+JOURNEY TRACK
+-------------------------------- */
+
+.journey {
+
+display: flex;
+
+align-items: flex-start;
+
+justify-content: space-between;
+
+margin: 30px 0;
+
+padding: 0 2px;
+
+position: relative;
+
+z-index: 2;
+}
+
+/* horizontal track */
+
+.journey::before {
+
+content: "";
+
+position: absolute;
+
+top: 25px;
+
+left: 8%;
+
+right: 8%;
+
+height: 6px;
+
+border-radius: 10px;
+
+background:
+rgba(255,255,255,.30);
+
+box-shadow:
+inset 0 2px 3px rgba(0,0,0,.2);
+}
+
+/* --------------------------------
+STAGE
+-------------------------------- */
+
+.stage {
+
+flex: 1;
+
+position: relative;
+
+text-align: center;
+
+z-index: 2;
+}
+
+.stage-icon {
+
+width: 50px;
+height: 50px;
+
+margin: auto;
+
+display: flex;
+
+align-items: center;
+justify-content: center;
+
+border-radius: 50%;
+
+font-size: 23px;
+
+background:
+rgba(7,17,31,.65);
+
+border:
+3px solid rgba(255,255,255,.35);
+
+box-shadow:
+0 7px 14px rgba(0,0,0,.25);
+
+transition:
+all .4s ease;
+}
+
+/* completed */
+
+.stage.completed .stage-icon {
+
+background:
+linear-gradient(
+145deg,
+#16a34a,
+#22c55e
+);
+
+border-color:
+#bbf7d0;
+
+transform:
+translateY(-2px);
+
+box-shadow:
+0 0 18px rgba(34,197,94,.5);
+}
+
+/* current */
+
+.stage.current .stage-icon {
+
+background:
+linear-gradient(
+145deg,
+#2563eb,
+#60a5fa
+);
+
+border-color:
+white;
+
+transform:
+scale(1.22)
+translateY(-4px);
+
+box-shadow:
+0 0 25px rgba(96,165,250,.85);
+}
+
+/* labels */
+
+.stage-label {
+
+margin-top: 10px;
+
+font-size: 9px;
+
+line-height: 1.15;
+
+color:
+rgba(255,255,255,.65);
+}
+
+.stage.current .stage-label {
+
+color: white;
+
+font-weight: 800;
+}
+
+/* --------------------------------
+UP NEXT
+-------------------------------- */
+
+.up-next {
+
+margin-top: 20px;
+
+padding: 18px;
+
+border-radius: 20px;
+
+background:
+rgba(255,255,255,.12);
+
+border:
+1px solid rgba(255,255,255,.15);
+
+text-align: center;
+}
+
+.up-next-label {
+
+text-transform: uppercase;
+
+font-size: 11px;
+
+letter-spacing: 2px;
+
+color:
+rgba(255,255,255,.6);
+}
+
+.up-next-stage {
+
+margin-top: 7px;
+
+font-size: 20px;
+
+font-weight: 700;
+}
+
+/* --------------------------------
+NEXT BUTTON
+-------------------------------- */
+
+.next-button {
+
+display: block;
+
+width: 100%;
+
+max-width: 350px;
+
+margin:
+25px auto 0;
+
+padding: 18px;
+
+border: none;
+
+border-radius: 18px;
+
+background:
+linear-gradient(
+135deg,
+#f97316,
+#ef4444
+);
+
+color: white;
+
+font-size: 19px;
+
+font-weight: 800;
+
+letter-spacing: .5px;
+
+cursor: pointer;
+
+box-shadow:
+0 12px 25px rgba(239,68,68,.35);
+
+transition:
+transform .15s,
+box-shadow .15s;
+}
+
+.next-button:hover {
+
+transform:
+translateY(-3px);
+
+box-shadow:
+0 16px 30px rgba(239,68,68,.45);
+}
+
+.next-button:active {
+
+transform:
+scale(.97);
+}
+
+.next-button:disabled {
+
+background:
+linear-gradient(
+135deg,
+#16a34a,
+#22c55e
+);
+
+box-shadow:
+0 10px 25px rgba(34,197,94,.35);
+
+cursor: default;
+}
+
+/* --------------------------------
+UPDATED
+-------------------------------- */
+
+.updated {
+
+text-align: center;
+
+margin-top: 16px;
+
+font-size: 12px;
+
+color:
+rgba(255,255,255,.55);
+}
+
+/* --------------------------------
+ARRIVED
+-------------------------------- */
+
+.arrived {
+
+animation:
+celebration .8s ease;
+}
+
+@keyframes celebration {
+
+0% {
+transform: scale(.8);
+opacity: 0;
+}
+
+70% {
+transform: scale(1.08);
+}
+
+100% {
+transform: scale(1);
+opacity: 1;
+}
+}
+
+/* --------------------------------
+MOBILE
+-------------------------------- */
+
+@media (max-width: 420px) {
+
+.app {
+padding:
+18px 10px 35px;
+}
+
+h1 {
+font-size: 25px;
+}
+
+.stage-icon {
+
+width: 43px;
+height: 43px;
+
+font-size: 20px;
+}
+
+.stage-label {
+font-size: 8px;
+}
+
+.current-emoji {
+font-size: 70px;
+}
+}
