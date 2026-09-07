@@ -1,114 +1,159 @@
 // ============================================
 // BAH BAH FAMILY VIEW
+// DATABASE-DRIVEN VERSION
 // ============================================
-
-const stages = [
-
-  {
-    emoji: "🚶‍♂️",
-    title: "Walk to bus"
-  },
-
-  {
-    emoji: "🚌",
-    title: "Ride the bus"
-  },
-
-  {
-    emoji: "🚂",
-    title: "Ride the train"
-  },
-
-  {
-    emoji: "🚇",
-    title: "Ride the underground"
-  },
-
-  {
-    emoji: "🚶‍♂️",
-    title: "Final walk to work"
-  },
-
-  {
-    emoji: "🏢",
-    title: "Reached work"
-  }
-
-];
 
 let journeyId = null;
+let stages = [];
 
 
 // ============================================
-// LOAD
+// LOAD ACTIVE JOURNEY
 // ============================================
 
 async function loadJourney() {
 
-  const response = await fetch(
+  try {
 
-    `${SUPABASE_URL}/rest/v1/journeys?name=eq.Bah%20Bah&select=*`,
+    // ----------------------------------------
+    // Find active journey
+    // ----------------------------------------
 
-    {
+    const journeyResponse = await fetch(
 
-      headers: {
+      `${SUPABASE_URL}/rest/v1/journeys?name=eq.Bah%20Bah&active=eq.true&select=*`,
 
-        apikey:
-          SUPABASE_ANON_KEY,
+      {
+        headers: {
 
-        Authorization:
-          `Bearer ${SUPABASE_ANON_KEY}`
+          apikey:
+            SUPABASE_ANON_KEY,
+
+          Authorization:
+            `Bearer ${SUPABASE_ANON_KEY}`
+
+        }
 
       }
 
+    );
+
+
+    const journeyText =
+      await journeyResponse.text();
+
+
+    if (!journeyResponse.ok) {
+
+      throw new Error(
+        `Journey error ${journeyResponse.status}: ${journeyText}`
+      );
+
     }
 
-  );
+
+    const journeys =
+      JSON.parse(journeyText);
 
 
-  if (!response.ok) {
+    if (!journeys.length) {
 
-    throw new Error(
-      `Supabase error ${response.status}`
+      throw new Error(
+        "No active journey found."
+      );
+
+    }
+
+
+    const journey =
+      journeys[0];
+
+
+    journeyId =
+      journey.id;
+
+
+    // ----------------------------------------
+    // Load stages belonging to this journey
+    // ----------------------------------------
+
+    const stagesResponse = await fetch(
+
+      `${SUPABASE_URL}/rest/v1/stages?journey_id=eq.${journeyId}&select=*&order=position.asc`,
+
+      {
+
+        headers: {
+
+          apikey:
+            SUPABASE_ANON_KEY,
+
+          Authorization:
+            `Bearer ${SUPABASE_ANON_KEY}`
+
+        }
+
+      }
+
     );
+
+
+    const stagesText =
+      await stagesResponse.text();
+
+
+    if (!stagesResponse.ok) {
+
+      throw new Error(
+        `Stages error ${stagesResponse.status}: ${stagesText}`
+      );
+
+    }
+
+
+    stages =
+      JSON.parse(stagesText);
+
+
+    if (!stages.length) {
+
+      throw new Error(
+        "No stages found for this journey."
+      );
+
+    }
+
+
+    // ----------------------------------------
+    // Render
+    // ----------------------------------------
+
+    render(journey);
+
+
+    document.getElementById(
+      "status"
+    ).textContent =
+      "🟢 Live";
 
   }
 
+  catch (error) {
 
-  const journeys =
-    await response.json();
+    console.error(error);
 
-
-  if (!journeys.length) {
-
-    throw new Error(
-      "Journey not found"
-    );
+    document.getElementById(
+      "status"
+    ).textContent =
+      `⚠️ ${error.message}`;
 
   }
-
-
-  const journey =
-    journeys[0];
-
-
-  journeyId =
-    journey.id;
-
-
-  render(journey);
-
-
-  document.getElementById(
-    "status"
-  ).textContent =
-    "🟢 Live";
 
 }
 
 
 // ============================================
-// RENDER
+// RENDER JOURNEY
 // ============================================
 
 function render(journey) {
@@ -119,9 +164,27 @@ function render(journey) {
     );
 
 
-  journeyElement.innerHTML =
-    "";
+  if (!journeyElement) {
 
+    console.error(
+      "Journey element missing"
+    );
+
+    return;
+
+  }
+
+
+  // ----------------------------------------
+  // Clear timeline
+  // ----------------------------------------
+
+  journeyElement.innerHTML = "";
+
+
+  // ----------------------------------------
+  // Create stages
+  // ----------------------------------------
 
   stages.forEach(
     (stage, index) => {
@@ -140,6 +203,8 @@ function render(journey) {
         "stage";
 
 
+      // Completed
+
       if (
         position <
         journey.current_stage
@@ -151,6 +216,8 @@ function render(journey) {
 
       }
 
+
+      // Current
 
       if (
         position ===
@@ -185,70 +252,119 @@ function render(journey) {
   );
 
 
+  // ----------------------------------------
   // Current stage
+  // ----------------------------------------
 
-  const stage =
-    stages[
-      journey.current_stage - 1
-    ];
-
-
-  document.getElementById(
-    "currentEmoji"
-  ).textContent =
-    stage.emoji;
+  const currentIndex =
+    journey.current_stage - 1;
 
 
-  document.getElementById(
-    "currentTitle"
-  ).textContent =
-    stage.title;
+  const currentStage =
+    stages[currentIndex];
 
 
-  // Progress
+  if (!currentStage) {
 
-  let progress = 0;
+    console.error(
+      "Current stage not found:",
+      journey.current_stage
+    );
+
+    return;
+
+  }
+
+
+  const currentEmoji =
+    document.getElementById(
+      "currentEmoji"
+    );
+
+
+  const currentTitle =
+    document.getElementById(
+      "currentTitle"
+    );
 
 
   if (
-    journey.current_stage >=
-    stages.length
+    currentEmoji &&
+    currentTitle
   ) {
 
-    progress = 100;
+    currentEmoji.textContent =
+      currentStage.emoji;
 
-  }
 
-  else {
-
-    progress =
-      Math.round(
-
-        (
-          (journey.current_stage - 1)
-          /
-          (stages.length - 1)
-        )
-        * 100
-
-      );
+    currentTitle.textContent =
+      currentStage.title;
 
   }
 
 
-  document.getElementById(
-    "progressBar"
-  ).style.width =
-    `${progress}%`;
+  // ----------------------------------------
+  // PROGRESS
+  // ----------------------------------------
+
+  let progress =
+    Number(
+      journey.progress
+    );
 
 
-  document.getElementById(
-    "progressText"
-  ).textContent =
-    `${progress}%`;
+  if (
+    Number.isNaN(progress)
+  ) {
+
+    progress = 0;
+
+  }
 
 
-  // Up next
+  // Keep between 0 and 100
+
+  progress =
+    Math.max(
+      0,
+      Math.min(
+        100,
+        progress
+      )
+    );
+
+
+  const progressBar =
+    document.getElementById(
+      "progressBar"
+    );
+
+
+  const progressText =
+    document.getElementById(
+      "progressText"
+    );
+
+
+  if (progressBar) {
+
+    progressBar.style.width =
+      `${progress}%`;
+
+  }
+
+
+  if (progressText) {
+
+    progressText.textContent =
+      `${progress}%`;
+
+  }
+
+
+  // ----------------------------------------
+  // UP NEXT
+  // ----------------------------------------
 
   const upNext =
     document.getElementById(
@@ -256,33 +372,46 @@ function render(journey) {
     );
 
 
-  if (
-    journey.current_stage <
-    stages.length
-  ) {
+  if (upNext) {
 
-    const next =
-      stages[
-        journey.current_stage
-      ];
+    if (
+      journey.current_stage <
+      stages.length
+    ) {
+
+      const nextStage =
+        stages[
+          journey.current_stage
+        ];
 
 
-    upNext.textContent =
-      `${next.emoji} ${next.title}`;
+      upNext.textContent =
+        `${nextStage.emoji} ${nextStage.title}`;
+
+    }
+
+    else {
+
+      upNext.textContent =
+        "🎉 Journey complete!";
+
+    }
 
   }
 
-  else {
 
-    upNext.textContent =
-      "🎉 Journey complete!";
+  // ----------------------------------------
+  // LAST UPDATED
+  // ----------------------------------------
 
-  }
+  const updated =
+    document.getElementById(
+      "updated"
+    );
 
-
-  // Updated time
 
   if (
+    updated &&
     journey.updated_at
   ) {
 
@@ -292,10 +421,7 @@ function render(journey) {
       );
 
 
-    document.getElementById(
-      "updated"
-    ).textContent =
-
+    updated.textContent =
       `Last updated ${
         date.toLocaleTimeString(
           [],
@@ -318,15 +444,19 @@ function render(journey) {
 function connectRealtime() {
 
   const websocketUrl =
+
     SUPABASE_URL
+
       .replace(
         "https://",
         "wss://"
       )
+
       .replace(
         "http://",
         "ws://"
       )
+
       +
       "/realtime/v1/websocket?apikey="
       +
@@ -348,6 +478,8 @@ function connectRealtime() {
         "Realtime connected"
       );
 
+
+      // Join the realtime channel
 
       socket.send(
 
@@ -396,6 +528,7 @@ function connectRealtime() {
       catch (error) {
 
         console.error(
+          "Realtime error:",
           error
         );
 
@@ -437,12 +570,6 @@ loadJourney()
       console.error(
         error
       );
-
-
-      document.getElementById(
-        "status"
-      ).textContent =
-        `⚠️ ${error.message}`;
 
     }
   );
