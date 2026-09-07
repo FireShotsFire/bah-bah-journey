@@ -20,6 +20,14 @@ let journeyId = null;
 
 async function loadJourney() {
 
+ try {
+
+ console.log("Supabase URL:", SUPABASE_URL);
+ console.log(
+ "Supabase key present:",
+ Boolean(SUPABASE_ANON_KEY)
+ );
+
  const response = await fetch(
  `${SUPABASE_URL}/rest/v1/journeys?name=eq.Bah%20Bah&select=*`,
  {
@@ -30,14 +38,28 @@ async function loadJourney() {
  }
  );
 
+ console.log("Supabase status:", response.status);
+
+ const responseText = await response.text();
+
+ console.log("Supabase response:", responseText);
+
  if (!response.ok) {
- throw new Error("Could not connect to Supabase");
+
+ throw new Error(
+ `Supabase error ${response.status}: ${responseText}`
+ );
+
  }
 
- const journeys = await response.json();
+ const journeys = JSON.parse(responseText);
 
  if (!journeys.length) {
- throw new Error("Bah Bah's journey was not found");
+
+ throw new Error(
+ "Connected to Supabase, but Bah Bah's journey was not found."
+ );
+
  }
 
  const journey = journeys[0];
@@ -46,7 +68,20 @@ async function loadJourney() {
  currentStage = journey.current_stage;
 
  render(journey);
+
+ } catch (error) {
+
+ console.error(error);
+
+ document.getElementById("journey").innerHTML = `
+ <div class="loading">
+ ${error.message}
+ </div>
+ `;
+
+ }
 }
+
 
 
 // --------------------------------------------
