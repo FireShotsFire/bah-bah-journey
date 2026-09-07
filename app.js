@@ -134,6 +134,26 @@ function render(journey) {
  document.getElementById("currentTitle").textContent =
  stage.title;
 
+// --------------------------------------------
+// Up next
+// --------------------------------------------
+
+const upNextElement =
+document.getElementById("upNext");
+
+if (journey.current_stage < stages.length) {
+
+const nextStage =
+stages[journey.current_stage];
+
+upNextElement.textContent =
+`${nextStage.emoji} ${nextStage.title}`;
+
+} else {
+
+upNextElement.textContent =
+"🎉 Journey complete!";
+}
 
  // Progress
 
