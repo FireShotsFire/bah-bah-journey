@@ -21,17 +21,10 @@ async function loadJourney() {
       `${SUPABASE_URL}/rest/v1/journeys?active=eq.true&select=*&order=updated_at.desc&limit=1`,
 
       {
-
         headers: {
-
-          apikey:
-            SUPABASE_ANON_KEY,
-
-          Authorization:
-            `Bearer ${SUPABASE_ANON_KEY`
-
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
         }
-
       }
 
     );
@@ -39,6 +32,13 @@ async function loadJourney() {
 
     const responseText =
       await response.text();
+
+
+    console.log(
+      "Journey response:",
+      response.status,
+      responseText
+    );
 
 
     if (!response.ok) {
@@ -75,26 +75,19 @@ async function loadJourney() {
       journey.current_stage;
 
 
-    // ----------------------------------------
-    // Load stages
-    // ----------------------------------------
+    // ========================================
+    // LOAD STAGES
+    // ========================================
 
     const stagesResponse = await fetch(
 
       `${SUPABASE_URL}/rest/v1/stages?journey_id=eq.${journeyId}&select=*&order=position.asc`,
 
       {
-
         headers: {
-
-          apikey:
-            SUPABASE_ANON_KEY,
-
-          Authorization:
-            `Bearer ${SUPABASE_ANON_KEY`
-
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
         }
-
       }
 
     );
@@ -102,6 +95,13 @@ async function loadJourney() {
 
     const stagesText =
       await stagesResponse.text();
+
+
+    console.log(
+      "Stages response:",
+      stagesResponse.status,
+      stagesText
+    );
 
 
     if (!stagesResponse.ok) {
@@ -120,7 +120,7 @@ async function loadJourney() {
     if (!stages.length) {
 
       throw new Error(
-        "No stages found."
+        "No stages found for this journey."
       );
 
     }
@@ -132,7 +132,11 @@ async function loadJourney() {
 
   catch (error) {
 
-    console.error(error);
+    console.error(
+      "LOAD ERROR:",
+      error
+    );
+
 
     const journeyElement =
       document.getElementById(
@@ -158,7 +162,7 @@ async function loadJourney() {
 
 
 // ============================================
-// RENDER
+// RENDER JOURNEY
 // ============================================
 
 function render(journey) {
@@ -170,7 +174,13 @@ function render(journey) {
 
 
   if (!journeyElement) {
+
+    console.error(
+      "Journey element missing"
+    );
+
     return;
+
   }
 
 
@@ -247,14 +257,23 @@ function render(journey) {
   // CURRENT STAGE
   // ==========================================
 
+  const currentIndex =
+    journey.current_stage - 1;
+
+
   const stage =
-    stages[
-      journey.current_stage - 1
-    ];
+    stages[currentIndex];
 
 
   if (!stage) {
+
+    console.error(
+      "Current stage not found:",
+      journey.current_stage
+    );
+
     return;
+
   }
 
 
@@ -277,6 +296,7 @@ function render(journey) {
 
     currentEmoji.textContent =
       stage.emoji;
+
 
     currentTitle.textContent =
       stage.title;
@@ -358,14 +378,14 @@ function render(journey) {
       stages.length
     ) {
 
-      const next =
+      const nextStage =
         stages[
           journey.current_stage
         ];
 
 
       upNext.textContent =
-        `${next.emoji} ${next.title}`;
+        `${nextStage.emoji} ${nextStage.title}`;
 
     }
 
@@ -380,7 +400,7 @@ function render(journey) {
 
 
   // ==========================================
-  // BUTTON
+  // NEXT BUTTON
   // ==========================================
 
   const button =
@@ -418,7 +438,7 @@ function render(journey) {
 
 
   // ==========================================
-  // UPDATED
+  // LAST UPDATED
   // ==========================================
 
   const updated =
@@ -493,17 +513,30 @@ if (nextButton) {
         currentStage + 1;
 
 
-      const progress =
-        Math.round(
+      // --------------------------------------
+      // Calculate progress
+      // --------------------------------------
 
-          (
-            (nextStage - 1)
-            /
-            (stages.length - 1)
-          )
-          * 100
+      let progress = 100;
 
-        );
+
+      if (
+        stages.length > 1
+      ) {
+
+        progress =
+          Math.round(
+
+            (
+              (nextStage - 1)
+              /
+              (stages.length - 1)
+            )
+            * 100
+
+          );
+
+      }
 
 
       try {
@@ -573,6 +606,17 @@ if (nextButton) {
           );
 
 
+        if (
+          !updatedJourneys.length
+        ) {
+
+          throw new Error(
+            "Journey was not updated."
+          );
+
+        }
+
+
         currentStage =
           nextStage;
 
@@ -586,6 +630,7 @@ if (nextButton) {
       catch (error) {
 
         console.error(
+          "UPDATE ERROR:",
           error
         );
 
